@@ -14,9 +14,9 @@ MODEL_PATH_DEFAULT = os.path.join(os.path.dirname(__file__), "model.joblib")
 
 @dataclass
 class PredictionResult:
-    label: str  # "spam" or "safe"
-    probability: float  # P(spam)
-    top_signals: List[Tuple[str, float]]  # (signal, weight)
+    label: str  
+    probability: float  
+    top_signals: List[Tuple[str, float]]  
 
 
 class SpamDetector:
@@ -27,7 +27,7 @@ class SpamDetector:
 
         if os.path.exists(self.model_path):
             obj = joblib.load(self.model_path)
-            # Allow either direct pipeline or dict
+           
             if isinstance(obj, dict) and "pipeline" in obj:
                 self.pipeline = obj["pipeline"]
                 self._feature_names = obj.get("feature_names")
@@ -65,7 +65,6 @@ class SpamDetector:
             if re.search(pat, t, flags=re.IGNORECASE):
                 found.append(name)
 
-        # Deduplicate while preserving order
         seen = set()
         out: List[str] = []
         for s in found:
@@ -78,50 +77,45 @@ class SpamDetector:
         self.ensure_loaded()
         assert self.pipeline is not None
 
-        # Probability spam
         proba = getattr(self.pipeline, "predict_proba")
-        prob = float(proba([email_text])[0][1])  # class order: [safe, spam] from training
+        prob = float(proba([email_text])[0][1])  
 
         label = "spam" if prob >= 0.5 else "safe"
 
         top_signals: List[Tuple[str, float]] = []
 
-        # If pipeline is our expected form, attempt to extract feature weights
         try:
             vectorizer = self.pipeline.named_steps["tfidf"]
             clf = self.pipeline.named_steps["clf"]
             if hasattr(vectorizer, "get_feature_names_out") and hasattr(clf, "coef_"):
                 feature_names = self._feature_names or list(vectorizer.get_feature_names_out())
-                # coef_ shape for LogisticRegression: (1, n_features) or (n_classes, n_features)
+           
                 coefs = clf.coef_
-                # We use class 1 (spam). For binary models, pick row 0.
+            
                 coef_row = coefs[0] if coefs.shape[0] == 1 else coefs[1]
 
-                # Get sparse vector for the email
                 x = self.pipeline.named_steps["tfidf"].transform([email_text])
-                # Get indices of non-zero features
+         
                 nz = x.nonzero()[1]
-                # Score signals by coefficient magnitude and sign
+              
                 scored: List[Tuple[str, float]] = []
-                for idx in nz[:2000]:  # cap for safety
+                for idx in nz[:2000]:  
                     w = float(coef_row[idx])
                     if abs(w) < 0.0001:
                         continue
                     scored.append((feature_names[idx], w))
 
-                # Sort by absolute contribution
                 scored.sort(key=lambda t: abs(t[1]), reverse=True)
                 top_signals = scored[:top_k_signals]
         except Exception:
             top_signals = []
 
-        # Add heuristic signals if model signals are empty
+      
         heuristic = self.extract_insight_signals(email_text)
         if not top_signals:
-            # Represent heuristics as weights ~ probability scale
+      
             top_signals = [(h, (prob - 0.5) * 2.0) for h in heuristic[:top_k_signals]]
         else:
-            # Append a few heuristic signals for readability
             for h in heuristic[: max(0, top_k_signals - len(top_signals))]:
                 if all(sig != h for sig, _ in top_signals):
                     top_signals.append((h, (prob - 0.5) * 2.0))
