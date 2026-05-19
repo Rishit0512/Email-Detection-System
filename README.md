@@ -7,8 +7,6 @@ The Email Spam Detection System is a machine learning-based web application deve
 
 The system analyzes user-provided email text, processes the content using text preprocessing techniques, and predicts the classification using a trained machine learning model through an interactive Flask-based web interface.
 
----
-
 ## Key Features
 
 * Real-time spam email detection
@@ -18,8 +16,6 @@ The system analyzes user-provided email text, processes the content using text p
 * Lightweight and efficient implementation
 * Fast prediction and response time
 * Demonstrates cybersecurity threat analysis concepts
-
----
 
 ## Technologies Used
 
