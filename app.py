@@ -9,7 +9,7 @@ from model import SpamDetector
 BASE_DIR = os.path.dirname(__file__)
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 512 * 1024  # 512KB
+app.config["MAX_CONTENT_LENGTH"] = 512 * 1024  
 
 
 detector = SpamDetector()
@@ -35,8 +35,6 @@ def predict():
 
     result = detector.predict(email_text)
 
-    # Threat monitoring / documentation logging (local JSONL)
-    # Logs timestamp, classification, probability, and signals.
     try:
         import json
         import datetime as _dt
@@ -54,7 +52,7 @@ def predict():
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False) + "\n")
     except Exception:
-        # Logging failure should not break prediction UI.
+  
         pass
 
     return render_template(
@@ -67,6 +65,6 @@ def predict():
 
 
 if __name__ == "__main__":
-    # Debug off by default; enable for development.
+
     app.run(host="127.0.0.1", port=5000, debug=True)
 
