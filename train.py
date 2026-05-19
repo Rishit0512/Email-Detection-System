@@ -15,13 +15,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "model.joblib")
 
 
 def load_embedded_dataset() -> Tuple[List[str], List[int]]:
-    """Embedded dataset for a working demo.
-
-    IMPORTANT: This is NOT a production dataset.
-    It is intentionally larger than before to reduce false positives.
-    Replace with your own labeled dataset for real accuracy.
-    """
-
+    
     spam_texts = [
         "URGENT! Your account has been suspended. Verify your identity immediately to avoid penalties.",
         "Account locked due to suspicious activity. Please confirm your password immediately.",
@@ -74,8 +68,7 @@ def load_embedded_dataset() -> Tuple[List[str], List[int]]:
 
 
 def build_pipeline() -> Pipeline:
-    # LogisticRegression with TF-IDF.
-    # Using a slightly stronger regularization helps generalization on small demo sets.
+
     clf = LogisticRegression(max_iter=4000, class_weight="balanced", C=1.0)
 
     return Pipeline(
@@ -106,10 +99,8 @@ def main():
     pipeline = build_pipeline()
     pipeline.fit(X_train, y_train)
 
-    # Evaluate quickly (not printed by default to keep output short)
     acc = pipeline.score(X_test, y_test)
-
-    # Save pipeline and feature names for later inspection
+    
     vectorizer = pipeline.named_steps["tfidf"]
     feature_names = list(vectorizer.get_feature_names_out())
 
