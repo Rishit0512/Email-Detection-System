@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Email Spam Detection</title>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; margin: 24px; background: #0b1220; color: #e6eefc; }
+      .card { background: #121c33; padding: 18px; border-radius: 12px; max-width: 980px; margin: auto; }
+      textarea { width: 100%; min-height: 240px; padding: 12px; border-radius: 10px; border: 1px solid #2a3a67; background: #0f1730; color: #e6eefc; }
+      button { padding: 10px 16px; border-radius: 10px; border: none; background: #3b82f6; color: white; font-weight: 700; cursor: pointer; }
+      .row { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+      .result { margin-top: 16px; padding: 14px; border-radius: 12px; border: 1px solid #2a3a67; }
+      .spam { color: #fecaca; }
+      .safe { color: #bbf7d0; }
+      .signals { margin-top: 10px; font-size: 14px; color: #cfe0ff; }
+      .signal { padding: 6px 10px; border-radius: 999px; background: rgba(59,130,246,0.12); display: inline-block; margin: 4px 6px 0 0; }
+      .error { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #7f1d1d33; color: #fecaca; border: 1px solid #7f1d1d; }
+      .meta { color: #a9b8e8; font-size: 13px; margin-top: 10px; line-height: 1.45; }
+      code { background: #0f1730; padding: 2px 6px; border-radius: 8px; border: 1px solid #2a3a67; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Email Spam Detection (Flask + ML)</h1>
+      <p class="meta">
+        Paste the full email text below. The system returns <b>Spam</b> or <b>Safe</b> and lists human-readable signals for documentation/monitoring.
+      </p>
+
+      <form action="/predict" method="post">
+        <label for="email_text"><b>Email content</b></label>
+        <textarea id="email_text" name="email_text" placeholder="Paste the entire email here...">{{ email_text or '' }}</textarea>
+        <div class="row" style="margin-top: 12px;">
+          <div class="meta">
+            Tip: include headers/body as plain text if possible.
+          </div>
+          <button type="submit">Check email</button>
+        </div>
+      </form>
+
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      {% if result %}
+        <div class="result">
+          <h2 class="{{ 'spam' if result.label == 'spam' else 'safe' }}">
+            Result: {{ result.label|upper }}
+          </h2>
+          <div class="meta">
+            Spam probability: <b>{{ '%.3f'|format(result.probability) }}</b>
+          </div>
+
+          <div class="signals">
+            <b>Actionable insights (signals/features):</b>
+            <div style="margin-top: 8px;">
+              {% for sig, w in result.top_signals %}
+                <span class="signal">{{ sig }}{% if w is not none %} (score: {{ '%.3f'|format(w) }}){% endif %}</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="meta" style="margin-top: 12px;">
+            <b>Monitoring guidance:</b>
+            <ul>
+              <li>If classified as spam, consider escalating for phishing indicators, credential baiting, and suspicious links.</li>
+              <li>Log the email text and signals returned to support risk identification and security controls documentation.</li>
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </body>
+</html>
+
